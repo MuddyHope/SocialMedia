@@ -5,3 +5,4 @@
 5) Media files --> Used to store the images on what they upload
 
 1) User Authentication --> Models.py (created Profile Model with user as foreignkey)
+2) To handle blog posts, create new model.

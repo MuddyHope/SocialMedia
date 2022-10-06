@@ -1,15 +1,18 @@
+from datetime import datetime
 from django.contrib.auth.models import User
 from django.shortcuts import render,redirect
 from django.contrib import messages, auth
-from .models import Profile
+from .models import Profile,Post
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
-
+from django.http import HttpResponse
 # Create your views here.
 
 @login_required(login_url= 'signin')
 def index(request):
-    return render(request, 'index.html')
+    user_object = User.objects.get(username = request.user.username)
+    user_profile = Profile.objects.get(user = user_object)
+    return render(request, 'index.html', {'user_profile': user_profile})
 
 
 def signup(request):
@@ -69,7 +72,7 @@ def logout(request):
     return redirect('signin')
 
 
-#@login_required(login_url = 'signin')
+@login_required(login_url = 'signin')
 def settings(request):
     user_profile = Profile.objects.get(user = request.user)  #user is from Profile Model
     if request.method == 'POST':
@@ -93,3 +96,16 @@ def settings(request):
         return redirect('setting')
     
     return render(request, 'setting.html', {'user_profile':user_profile})
+
+def upload(request):
+    if request.method == 'POST':
+        user = request.user.username
+        print(user)
+        image_upload = request.FILES.get('image_upload')
+        image_caption = request.POST['image_caption']
+        user_post = Post.objects.create(username = user, image = image_upload, caption = image_caption)
+        user_post.save()
+
+        return redirect('/')
+    else:
+        return redirect('/')
