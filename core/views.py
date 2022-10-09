@@ -1,18 +1,22 @@
+from audioop import reverse
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.shortcuts import render,redirect
 from django.contrib import messages, auth
-from .models import Profile,Post
+from .models import LikePost, Profile,Post
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+
+
 # Create your views here.
 
 @login_required(login_url= 'signin')
 def index(request):
     user_object = User.objects.get(username = request.user.username)
     user_profile = Profile.objects.get(user = user_object)
-    return render(request, 'index.html', {'user_profile': user_profile})
+    feed_list = Post.objects.all()[::-1]   #-1 is added for latest first
+    return render(request, 'index.html', {'user_profile': user_profile, 'feed_list' : feed_list})
 
 
 def signup(request):
@@ -97,6 +101,8 @@ def settings(request):
     
     return render(request, 'setting.html', {'user_profile':user_profile})
 
+
+@login_required(login_url = "signin")
 def upload(request):
     if request.method == 'POST':
         user = request.user.username
@@ -109,3 +115,23 @@ def upload(request):
         return redirect('/')
     else:
         return redirect('/')
+
+@login_required(login_url= 'signin')
+def like_post(request):
+    username = request.user.username
+    post_id = request.GET.get('post_id')
+    
+    post = Post.objects.get(id = post_id)
+
+    #if the currently logged in user has liked the post or not
+    like_filter = LikePost.objects.filter(post_id = post_id, username = username).first()
+
+    if like_filter == None:
+        new_like = LikePost.objects.create(post_id = post_id, username = username)
+        new_like.save()
+        post.no_of_likes += 1
+        post.save()
+    else:
+        like_filter.delete()
+        post.no_of_likes -=1 
+    return redirect('/')
