@@ -1,9 +1,10 @@
 from audioop import reverse
 from datetime import datetime
+from winreg import REG_QWORD
 from django.contrib.auth.models import User
 from django.shortcuts import render,redirect
 from django.contrib import messages, auth
-from .models import LikePost, Profile,Post
+from .models import FollowerCount, LikePost, Profile,Post
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -134,4 +135,47 @@ def like_post(request):
     else:
         like_filter.delete()
         post.no_of_likes -=1 
+        post.save()
     return redirect('/')
+
+@login_required(login_url= 'signin')
+def profile(request, pk):
+    user_object = User.objects.get(username = pk)
+    user_profile = Profile.objects.get(user = user_object)
+    feed_list = Post.objects.filter(username = pk)
+    feed_length = len(feed_list)
+
+    context = {
+        'user_object': user_object,
+        'user_profile': user_profile,
+        'feed_list': feed_list,
+        'feed_length' : feed_length    
+    }
+    return render(request, 'profile.html', context)
+
+@login_required(login_url= 'signin')
+def follow(request):
+    if request.method == 'POST':
+        follower = request.POST['follower']
+        user = request.POST['user']
+        print(user, follower)
+
+        #user is the new_following profile, follower is the current_follower profile
+        if follower == user:
+                return redirect('setting')
+        
+        if FollowerCount.objects.filter(follower= follower, username = user).first():
+            delete_follower = FollowerCount.objects.get(follower = follower, username = user)
+            delete_follower.delete()
+            #print(FollowerCount.username())
+            return redirect('/profile/'+ user, {'Follower_count': FollowerCount})
+        else:
+            new_follower = FollowerCount.objects.create(follower = follower, username = user)
+            new_follower.save()
+            #print(FollowerCount.username())
+            return redirect('/profile/' + user,{'Follower_count': FollowerCount})
+        
+
+
+    else:
+        return redirect(request, 'profile')

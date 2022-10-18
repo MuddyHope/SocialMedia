@@ -15,7 +15,7 @@ class Profile(models.Model):
     bio = models.TextField(max_length = 100, blank = True)
     profileimg = models.ImageField(upload_to = 'profile_images', default = 'default-pic.JPG')            #place to store the image in profile_images
     location = models.CharField(max_length = 100, blank = True)
-    
+
     def __str__(self):
         return self.user.username
 
@@ -28,11 +28,18 @@ class Post(models.Model):
     no_of_likes = models.IntegerField(default = 0)
 
     def __str__(self):
-        return self.user
+        return self.username
 
 
 class LikePost(models.Model):
     post_id = models.CharField(max_length = 100)
+    username = models.CharField(max_length = 100)
+
+    def __str__(self) -> str:
+        return self.username
+
+class FollowerCount(models.Model):
+    follower = models.CharField(max_length = 100)
     username = models.CharField(max_length = 100)
 
     def __str__(self) -> str:
